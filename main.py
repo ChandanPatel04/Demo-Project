@@ -171,7 +171,7 @@ def predict(data: StudentData):
         "Stress_Level":
             data.Stress_Level,
 
-        "Grouped _country":
+        "Grouped _Country":
             country_group
 
     }])
