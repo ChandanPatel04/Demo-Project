@@ -92,61 +92,99 @@
   // Client-side validation mirroring the StudentData model
   // ---------------------------------------------------------
   function validate(payload) {
-    const errors = [];
+  const errors = [];
 
-    const numericChecks = [
-      ["age", 10, 100],
-      ["avg_daily_usage_hours", 0, 24],
-      ["daily_unlocks", 0, Infinity],
-      ["study_hours", 0, 24],
-      ["physical_activity_hours", 0, 24],
-      ["sleep_hours_per_night", 0, 24],
-    ];
+  const numericChecks = [
+    ["Age", "age", 10, 100],
+    ["Avg_Daily_Usage_Hours", "avg_daily_usage_hours", 0, 24],
+    ["Daily_Unlocks", "daily_unlocks", 0, Infinity],
+    ["Study_Hours", "study_hours", 0, 24],
+    ["Physical_Activity_Hours", "physical_activity_hours", 0, 24],
+    ["Sleep_Hours_Per_Night", "sleep_hours_per_night", 0, 24],
+  ];
 
-    numericChecks.forEach(([key, min, max]) => {
-      const input = document.getElementById(key);
-      const val = payload[key];
-      if (val === "" || val === null || Number.isNaN(val)) {
-        errors.push([input, "This field is required."]);
-      } else if (val < min || val > max) {
-        errors.push([input, `Must be between ${min} and ${max === Infinity ? "0+" : max}.`]);
-      }
-    });
+  numericChecks.forEach(([payloadKey, inputId, min, max]) => {
+    const input = document.getElementById(inputId);
+    const val = payload[payloadKey];
 
-    ["gender", "country", "academic_level", "most_used_platform", "purpose_of_use"].forEach((key) => {
-      const input = document.getElementById(key);
-      if (!payload[key] || String(payload[key]).trim() === "") {
-        errors.push([input, "This field is required."]);
-      }
-    });
-
-    if (!payload.stress_level) {
-      errors.push([stressHiddenInput, "Pick a stress level."]);
+    if (val === "" || val === null || Number.isNaN(val)) {
+      errors.push([input, "This field is required."]);
+    } else if (val < min || val > max) {
+      errors.push([
+        input,
+        `Must be between ${min} and ${max === Infinity ? "0+" : max}.`
+      ]);
     }
+  });
 
-    return errors;
+  const requiredFields = [
+    ["Gender", "gender"],
+    ["Country", "country"],
+    ["Academic_Level", "academic_level"],
+    ["Most_Used_Platform", "most_used_platform"],
+    ["Purpose_Of_Use", "purpose_of_use"]
+  ];
+
+  requiredFields.forEach(([payloadKey, inputId]) => {
+    const input = document.getElementById(inputId);
+
+    if (
+      !payload[payloadKey] ||
+      String(payload[payloadKey]).trim() === ""
+    ) {
+      errors.push([input, "This field is required."]);
+    }
+  });
+
+  if (!payload.Stress_Level) {
+    errors.push([stressHiddenInput, "Pick a stress level."]);
   }
+
+  return errors;
+}
 
   // ---------------------------------------------------------
   // Gather form data into the exact StudentData shape
   // ---------------------------------------------------------
   function collectPayload() {
-    const fd = new FormData(form);
-    return {
-      age: fd.get("age") === "" ? NaN : parseInt(fd.get("age"), 10),
-      gender: fd.get("gender") || "",
-      country: (fd.get("country") || "").trim(),
-      academic_level: fd.get("academic_level") || "",
-      most_used_platform: fd.get("most_used_platform") || "",
-      purpose_of_use: fd.get("purpose_of_use") || "",
-      avg_daily_usage_hours: fd.get("avg_daily_usage_hours") === "" ? NaN : parseFloat(fd.get("avg_daily_usage_hours")),
-      daily_unlocks: fd.get("daily_unlocks") === "" ? NaN : parseInt(fd.get("daily_unlocks"), 10),
-      study_hours: fd.get("study_hours") === "" ? NaN : parseFloat(fd.get("study_hours")),
-      physical_activity_hours: fd.get("physical_activity_hours") === "" ? NaN : parseFloat(fd.get("physical_activity_hours")),
-      sleep_hours_per_night: fd.get("sleep_hours_per_night") === "" ? NaN : parseFloat(fd.get("sleep_hours_per_night")),
-      stress_level: fd.get("stress_level") || "",
-    };
-  }
+  const fd = new FormData(form);
+
+  return {
+    Age: fd.get("age") === "" ? NaN : parseInt(fd.get("age"), 10),
+    Gender: fd.get("gender") || "",
+    Country: (fd.get("country") || "").trim(),
+    Academic_Level: fd.get("academic_level") || "",
+    Most_Used_Platform: fd.get("most_used_platform") || "",
+    Purpose_Of_Use: fd.get("purpose_of_use") || "",
+
+    Avg_Daily_Usage_Hours:
+      fd.get("avg_daily_usage_hours") === ""
+        ? NaN
+        : parseFloat(fd.get("avg_daily_usage_hours")),
+
+    Daily_Unlocks:
+      fd.get("daily_unlocks") === ""
+        ? NaN
+        : parseInt(fd.get("daily_unlocks"), 10),
+
+    Study_Hours:
+      fd.get("study_hours") === ""
+        ? NaN
+        : parseFloat(fd.get("study_hours")),
+
+    Physical_Activity_Hours:
+      fd.get("physical_activity_hours") === ""
+        ? NaN
+        : parseFloat(fd.get("physical_activity_hours")),
+
+    Sleep_Hours_Per_Night:
+      fd.get("sleep_hours_per_night") === ""
+        ? NaN
+        : parseFloat(fd.get("sleep_hours_per_night")),
+
+    Stress_Level: fd.get("stress_level") || ""
+  };
+}
 
   // ---------------------------------------------------------
   // UI state switching
@@ -210,20 +248,46 @@
   // Parse FastAPI / Pydantic 422 error responses into
   // field-level messages where possible
   // ---------------------------------------------------------
-  function applyServerValidationErrors(detail) {
-    if (!Array.isArray(detail)) return false;
-    let matched = false;
-    detail.forEach((err) => {
-      const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : null;
-      const input = field ? document.getElementById(field) : null;
-      const target = field === "stress_level" ? stressHiddenInput : input;
-      if (target) {
-        setFieldError(target, err.msg || "Invalid value.");
-        matched = true;
-      }
-    });
-    return matched;
-  }
+ function applyServerValidationErrors(detail) {
+  if (!Array.isArray(detail)) return false;
+
+  const fieldMap = {
+    Age: "age",
+    Gender: "gender",
+    Country: "country",
+    Academic_Level: "academic_level",
+    Most_Used_Platform: "most_used_platform",
+    Purpose_Of_Use: "purpose_of_use",
+    Avg_Daily_Usage_Hours: "avg_daily_usage_hours",
+    Daily_Unlocks: "daily_unlocks",
+    Study_Hours: "study_hours",
+    Physical_Activity_Hours: "physical_activity_hours",
+    Sleep_Hours_Per_Night: "sleep_hours_per_night"
+  };
+
+  let matched = false;
+
+  detail.forEach((err) => {
+    const field = Array.isArray(err.loc)
+      ? err.loc[err.loc.length - 1]
+      : null;
+
+    let target = null;
+
+    if (field === "Stress_Level") {
+      target = stressHiddenInput;
+    } else if (field && fieldMap[field]) {
+      target = document.getElementById(fieldMap[field]);
+    }
+
+    if (target) {
+      setFieldError(target, err.msg || "Invalid value.");
+      matched = true;
+    }
+  });
+
+  return matched;
+}
 
   // ---------------------------------------------------------
   // Submit handler
