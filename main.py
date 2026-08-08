@@ -72,7 +72,8 @@ class StudentData(BaseModel):
         "TikTok",
         "LinkedIn",
         "WhatsApp",
-        "WeChat"
+        "WeChat",
+        "YouTube"
     ]
 
     Purpose_Of_Use: Literal[
