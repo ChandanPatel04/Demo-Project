@@ -57,11 +57,12 @@ class StudentData(BaseModel):
     Country: str
 
     Academic_Level: Literal[
-        "Undergraduate",
-        "Graduate",
-        "Postgraduate",
-        "Other"
-    ]
+    "High School",
+    "Undergraduate",
+    "Graduate",
+    "Postgraduate",
+    "Other"
+]
 
     Most_Used_Platform: Literal[
         "Instagram",
